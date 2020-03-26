@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class TesseractDriver
 {
@@ -38,7 +39,7 @@ public class TesseractDriver
 
 
     }
-    public string Recognize(Texture2D imageToRecognize)
+    public List<WordList> Recognize(Texture2D imageToRecognize)
     {
         return _tesseract.Recognize(imageToRecognize);
     }

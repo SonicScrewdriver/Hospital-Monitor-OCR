@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
 
@@ -9,40 +10,65 @@ public class TesseractDemoScript : MonoBehaviour
     [SerializeField] private Texture2D imageToRecognize;
     [SerializeField] private TextMeshProUGUI displayText;
     [SerializeField] private RawImage outputImage;
+    private Texture2D texture;
     private TesseractDriver _tesseractDriver;
+    private Texture2D currentFrame;
     private string _text = "";
+    private static GetWebcamFrame webcam;
+    private int frameCount = 0;
 
     private void Start()
     {
-        // Set the texture for the image we want to recognize, set it to 32bit
-        Texture2D texture = new Texture2D(imageToRecognize.width,
-                 imageToRecognize.height, TextureFormat.ARGB32, false);
-        texture.SetPixels32(imageToRecognize.GetPixels32());
-        texture.Apply();
-
-        _tesseractDriver = new TesseractDriver();
-        // Recognize the Texture
-        Recoginze(texture);
-
-        // Display the image
-        SetImageDisplay();
+        webcam = GameObject.Find("Webcam").GetComponent<GetWebcamFrame>();
     }
-    private void Recoginze(Texture2D outputTexture)
+
+    private void Update()
     {
+        frameCount++;
+        if(frameCount == 48)
+        {
+            Debug.Log("Trying to recognize now");
+            texture = webcam.GetCurrFrame();
+
+            // Set the texture for the image we want to recognize, set it to 32bit
+            //  texture = new Texture2D(currentFrame.width, currentFrame.height, TextureFormat.ARGB32, false); 
+            //  texture.SetPixels32(currentFrame.GetPixels32());
+            texture.Apply();
+
+            Texture2D snap = new Texture2D(texture.width, texture.height);
+            snap.SetPixels(texture.GetPixels());
+            snap.Apply();
+            outputImage.material.mainTexture = snap;
+
+            _tesseractDriver = new TesseractDriver();
+            // Recognize the Texture
+            Recognize(snap);
+
+            // Display the image
+            SetImageDisplay();
+        }
+        else
+        {
+            return;
+        }
+    }
+    private void Recognize(Texture2D outputTexture)
+    {
+        Debug.Log("Trying to recognize now, in recognize function");
         // Clear out the text
         ClearTextDisplay();
 
         // Add the Tesseract Version to the text to the Display 
-        AddToTextDisplay(_tesseractDriver.CheckTessVersion());
+        Debug.Log(_tesseractDriver.CheckTessVersion());
 
         // Start up the Tesseract Driver
         _tesseractDriver.Setup();
 
         // Add the Recognized Text to the Display
-        AddToTextDisplay(_tesseractDriver.Recognize(outputTexture));
+        GetWords(_tesseractDriver.Recognize(outputTexture));
 
         // Add any error messages To the Display
-        AddToTextDisplay(_tesseractDriver.GetErrorMessage(), true);
+      //  Debug.LogError(_tesseractDriver.GetErrorMessage());
     }
 
     // Clears the Text display
@@ -52,17 +78,13 @@ public class TesseractDemoScript : MonoBehaviour
     }
 
     // Add text to the display -- if it's an error, console log it instead
-    private void AddToTextDisplay(string text, bool isError = false)
+    private void GetWords(List<WordList> words, bool isError = false)
     {
-        if (string.IsNullOrWhiteSpace(text)) return;
-
-        _text += (string.IsNullOrWhiteSpace(displayText.text) ? "" :
-                  "\n") + text;
-
-        if (isError)
-            Debug.LogError(text);
-        else
-            Debug.Log(text);
+        for (int i = 0; i < words.Count; i++)
+        {
+            var output = JsonUtility.ToJson(words[i], true);
+            Debug.Log("Word #" + i + " " + output.ToString());
+        }
     }
 
     // Called Every frame, after all the update functions have been called.
@@ -74,6 +96,7 @@ public class TesseractDemoScript : MonoBehaviour
     // Create the Highlights
     private void SetImageDisplay()
     {
+
         RectTransform rectTransform =
              outputImage.GetComponent<RectTransform>();
 
