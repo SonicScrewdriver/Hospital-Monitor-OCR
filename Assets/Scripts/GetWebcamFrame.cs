@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 public class GetWebcamFrame : MonoBehaviour
 {
@@ -8,7 +9,7 @@ public class GetWebcamFrame : MonoBehaviour
     private Texture2D currTexture;
     private Texture2D prevTexture;
     private int frameCount;
-
+    [SerializeField] private RawImage outputImage;
 
     // Use this for initialization
     void Start()
@@ -17,10 +18,12 @@ public class GetWebcamFrame : MonoBehaviour
         for (int i = 0; i < devices.Length; i++)
             Debug.Log(devices[i].name);
 
-        webcamTexture = new WebCamTexture();
+        webcamTexture = new WebCamTexture(1920, 1080);
+     
         webcamTexture.wrapMode = TextureWrapMode.Clamp;
-        currTexture = new Texture2D(webcamTexture.width, webcamTexture.height);
-        prevTexture = new Texture2D(webcamTexture.width, webcamTexture.height);
+        Debug.Log("Texture Size " + webcamTexture.width + " h: " + webcamTexture.height);
+        currTexture = new Texture2D(1920, 1080, TextureFormat.ARGB32, false);
+        prevTexture = new Texture2D(1920, 1080, TextureFormat.ARGB32, false);
 
 
         if (devices.Length > 1)
@@ -42,20 +45,24 @@ public class GetWebcamFrame : MonoBehaviour
 
         if (prevTexture.width < webcamTexture.width)
         {
-            currTexture.Resize(webcamTexture.width, webcamTexture.height);
-            prevTexture.Resize(webcamTexture.width, webcamTexture.height);
+            Debug.Log("Smaller" + webcamTexture.width + " cur" + prevTexture.width);
+       //     currTexture.Resize(webcamTexture.width, webcamTexture.height);
+       //     prevTexture.Resize(webcamTexture.width, webcamTexture.height);
         }
         else
         {
             if (this.frameCount >= this.frameDiff)
             {
-                prevTexture.SetPixels32(currTexture.GetPixels32());
-                prevTexture.Apply();
-                currTexture.SetPixels32(webcamTexture.GetPixels32());
+               prevTexture.SetPixels32(currTexture.GetPixels32());
+               prevTexture.Apply();
+                currTexture.SetPixels(webcamTexture.GetPixels());
                 currTexture.Apply();
                 this.frameCount = 0;
             }
         }
+
+          
+        
     }
 
     public Vector2 GetSize()

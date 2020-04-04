@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
 using System.IO;
+using System.Runtime.InteropServices;
 
 public class TesseractDemoScript : MonoBehaviour
 {
-
+    [DllImport("OpenCV")]
+    private static extern void ProcessImage(ref Color32[] rawImage, int width, int height);
     // Set the main properties
     [SerializeField] private Texture2D imageToRecognize;
     [SerializeField] private TextMeshProUGUI displayText;
     [SerializeField] private RawImage outputImage;
-   // [Range(0.0f, 10.0f)] public float mySliderFloat;
+    // [Range(0.0f, 10.0f)] public float mySliderFloat;
     [Range(-100.0f, 100.0f)] [SerializeField] public double contrast = 100;
     private Texture2D texture;
     private TesseractDriver _tesseractDriver;
@@ -30,7 +32,7 @@ public class TesseractDemoScript : MonoBehaviour
     private void Update()
     {
         frameCount++;
-        if(frameCount == 48)
+        if (frameCount == 48)
         {
             Debug.Log("Trying to recognize now");
             texture = webcam.GetCurrFrame();
@@ -53,7 +55,7 @@ public class TesseractDemoScript : MonoBehaviour
             // Recognize the Texture
             Recognize(snap);
 
-    
+
             // Display the image
             SetImageDisplay();
         }
@@ -65,7 +67,7 @@ public class TesseractDemoScript : MonoBehaviour
     private void Recognize(Texture2D outputTexture)
     {
         Debug.Log("Contrasting");
-     
+
         Debug.Log("Trying to recognize now, in recognize function");
         // Clear out the text
         ClearTextDisplay();
@@ -80,7 +82,7 @@ public class TesseractDemoScript : MonoBehaviour
 
 
         // Add any error messages To the Display
-      //  Debug.LogError(_tesseractDriver.GetErrorMessage());
+        //  Debug.LogError(_tesseractDriver.GetErrorMessage());
     }
 
     // Clears the Text display
@@ -96,21 +98,22 @@ public class TesseractDemoScript : MonoBehaviour
         {
             var output = JsonUtility.ToJson(words[i], true);
             Debug.Log("Word #" + i + " " + output.ToString());
-            if(words[i].word == "RR")
+            if (words[i].word == "RR")
             {
                 Rect location = words[i].box;
                 Debug.Log("Respiratory Rate found at: " + location.x + " " + location.y);
-                
+
             }
         }
     }
 
-    public static Color FromArgb(int red, int green, int blue)
+    public static Color FromArgb(float red, float green, float blue)
     {
+       // Debug.Log("Fromargb" + red + green + blue);
         // float fa = ((float)alpha) / 255.0f;
-        float fr = ((float)red) / 255.0f;
-        float fg = ((float)green) / 255.0f;
-        float fb = ((float)blue) / 255.0f;
+        float fr = red;
+        float fg = green;
+        float fb = blue;
         return new Color(fr, fg, fb);
     }
 
@@ -118,56 +121,61 @@ public class TesseractDemoScript : MonoBehaviour
     public void ApplyContrast(Texture2D outputTexture)
     {
 
-        double contrastD = contrast;
- 
+        float contrastD = (float)contrast;
+
         Texture2D contrastImg = new Texture2D(outputTexture.width, outputTexture.height);
-     //   contrastImg.SetPixels(outputTexture.GetPixels());
-      //  contrastImg.LoadImage(outputTexture.bytes);
+          contrastImg.SetPixels(outputTexture.GetPixels());
+        //  contrastImg.LoadImage(outputTexture.bytes);
         contrastImg.Apply();
-       if (contrastD < -100) contrastD = -100;
-        if (contrastD > 100) contrastD = 100;
-        contrastD = (100.0 + contrastD) / 100.0;
+        var rawImage = outputTexture.GetPixels32();
+        ProcessImage(ref rawImage, outputTexture.width, outputTexture.height);
+        contrastImg.SetPixels32(rawImage);
+        contrastImg.Apply();
+
+        /*
+        if (contrastD < -100f) contrastD = -100f;
+        if (contrastD > 100f) contrastD = 100f;
+        contrastD = (100.0f + contrastD) / 100.0f;
         contrastD *= contrastD;
-       Debug.Log("ContrastD " + contrastD);
-        contrastD = 1;
-      //  Debug.Log("ContrastD " + contrastD);
+        Debug.Log("ContrastD " + contrastD);
+        //  contrastD = 1;
+        //  Debug.Log("ContrastD " + contrastD);
         Color color;
         for (int x = 0; x < contrastImg.width; x++)
         {
             for (int y = 0; y < contrastImg.height; y++)
             {
-                color = outputTexture.GetPixel(x, y);
-                double pR = color.r / 255.0;
-                pR -= 0.5;
+                color = webcam.GetPixel(x, y);
+              //  Debug.Log("Original Colour:" + color);
+                float pR = color.r;
+                pR -= 0.5f;
                 pR *= contrastD;
-                pR += 0.5;
-                pR *= 255;
-                if (pR < 0) pR = 0;
-                if (pR > 255) pR = 255;
+                pR += 0.5f;
+                if (pR < 0f) pR = 0f;
+                if (pR > 1f) pR = 1f;
 
-                double pG = color.g / 255.0;
-                pG -= 0.5;
+                float pG = color.g;
+                pG -= 0.5f;
                 pG *= contrastD;
-                pG += 0.5;
-                pG *= 255;
-                if (pG < 0) pG = 0;
-                if (pG > 255) pG = 255;
+                pG += 0.5f;
+                if (pG < 0f) pG = 0f;
+                if (pG > 1f) pG = 1;
 
-                double pB = color.b / 255.0;
-                pB -= 0.5;
+                float pB = color.b;
+                pB -= 0.5f;
                 pB *= contrastD;
-                pB += 0.5;
-                pB *= 255;
-                if (pB < 0) pB = 0;
-                if (pB > 255) pB = 255;
-           //     Debug.Log("New Colour:" + pR + " " + pG + " " + pB);
-                 Color c = new Color(System.Convert.ToInt32(pR), System.Convert.ToInt32(pG), System.Convert.ToInt32(pB));
-                contrastImg.SetPixel(x, y, c);
+                pB += 0.5f;
+                if (pB < 0f) pB = 0f;
+                if (pB > 1f) pB = 1f;
+              //      Debug.Log("New Colour:" + System.Convert.ToByte(pR) + " " + pG + " " + pB);
+                Color c = FromArgb(pR, pG, pB);
+             //  Debug.Log("New Colour2:" + c);
+               contrastImg.SetPixel(x, y, c);
                 contrastImg.Apply();
             }
-        }
+        } */
         contrastImg.Apply();
-        
+
 
         outputImage.material.mainTexture = contrastImg;
         byte[] bytes = contrastImg.EncodeToPNG();

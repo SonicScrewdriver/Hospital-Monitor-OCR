@@ -180,15 +180,15 @@ RectTransform:
   m_GameObject: {fileID: 418083814}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.324207, y: 1.7151449, z: 1.0665}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1498133002}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -313, y: 20}
-  m_SizeDelta: {x: 512, y: 512}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &515954136
 GameObject:
@@ -222,6 +222,7 @@ MonoBehaviour:
   imageToRecognize: {fileID: 2800000, guid: 301611f569ef44d4baaa399622d00c2b, type: 3}
   displayText: {fileID: 710697427}
   outputImage: {fileID: 418083815}
+  contrast: 40
 --- !u!4 &515954138
 Transform:
   m_ObjectHideFlags: 0
